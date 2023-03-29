@@ -12,7 +12,8 @@ padding = ""
 # Dummy response to return in dry-run mode
 dummy_response = {"id": "123456789", "post_id": "987654321_123456789"}
 
-NAME = os.environ.get("VIDEO_NAME") 
+NAME = os.environ.get("VIDEO_NAME")
+NAME = NAME.replace('.mkv','')
 def initialize(_current_frame_number, _total_frames, _pimage, _cimage):
     global current_frame_number
     current_frame_number = _current_frame_number
