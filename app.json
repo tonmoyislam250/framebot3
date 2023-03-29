@@ -7,7 +7,7 @@
     "ACCESS_TOKEN": {
       "description": "Page Access token to post",
       "required": true
-    }
+    },
     "PAGE_ID": {
       "description": "Page ID to post",
       "required": true
