@@ -1,3 +1,4 @@
+#!/bin/bash
 LINK=https://drive.google.com/file/d/1szSZvOG9vXj93C0WmCszEHP6-C3jG4sh/view
 VIDEODIR=./videos/"Ben 10 Alien Force S01E02 Ben 10 Returns (2).mkv"
 cd /usr/src/app
