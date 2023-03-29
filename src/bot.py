@@ -55,7 +55,7 @@ def post_caption():
     # Add your desired post-caption here
     # It is recommended to execute the script in dry-run mode first to check the post captions and text formats
     msg = (
-        f"{NAME}"
+        f"{NAME}\n"
         # f"Episode 01 of 12\n"
         f"Frame {current_frame_number:0{padding}} of {total_frames}"
         # Comment out the following line if you aren't using timestamp
