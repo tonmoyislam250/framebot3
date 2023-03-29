@@ -4,4 +4,5 @@ WORKDIR /usr/src/app/
 RUN apk update && apk add --no-cache bash ffmpeg wget unzip python3 py3-pip
 RUN pip3 install gdown yt-dlp requests
 ADD . .
+RUN chmod +x makeframe.sh
 CMD ./makeframe.sh
