@@ -7,5 +7,4 @@ file ben10AFS01.zip
 mkdir -pv videos/raw && unzip -d ./videos/ -j ben10AFS01.zip
 ls -a
 ffmpeg -copyts -i "./videos/Ben 10 Alien Force S01E02 Ben 10 Returns (2).mkv" -r 1000 -vf "mpdecimate=hi=64*12*15:lo=64*5*15:frac=1" -frame_pts true -vsync vfr -q:v 5 "./videos/raw/%04d.jpg"
-ls -1 videos/raw | wc -l 
 python3 yafot-facebook.py --page-id $PAGE_ID --pdir "videos/raw/" --token $ACCESS_TOKEN --start 0001 --count 200 --delay 60
