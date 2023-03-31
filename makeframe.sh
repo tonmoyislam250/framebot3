@@ -7,7 +7,7 @@ mkdir -pv videos/raw \
 && unzip -d ./videos/ -j ${VIDEO_NAME}.zip
 ls -a videos/sub && ls -a videos && uchardet videos/${VIDEO_NAME}.srt
 rm -rf videos/raw/* && rm -rf videos/sub/*
-ffmpeg -sub_charenc $(uchardet videos/${VIDEO_NAME}.srt) -i videos/{VIDEO_NAME}.srt videos/{VIDEO_NAME}.ass
+ffmpeg -sub_charenc $(uchardet videos/${VIDEO_NAME}.srt) -i videos/${VIDEO_NAME}.srt videos/${VIDEO_NAME}.ass
 ffmpeg -copyts -i \
        "./videos/${VIDEO_NAME}.mp4" \
        -r 1000 -vf "mpdecimate=hi=64*12*15:lo=64*5*15:frac=1",subtitles=videos/${VIDEO_NAME}.ass \
