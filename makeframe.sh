@@ -1,11 +1,17 @@
 #!/bin/bash
 pwd && ls -a
-LINK="https://drive.google.com/uc?id=1szSZvOG9vXj93C0WmCszEHP6-C3jG4sh"
 cd /usr/src/app
 gdown $LINK
-file ben10AFS01.zip
-mkdir -pv videos/raw && unzip -d ./videos/ -j ben10AFS01.zip
-ls -a videos/raw
-rm -rf videos/raw/*
-ffmpeg -copyts -i "./videos/${VIDEO_NAME}" -r 1000 -vf "mpdecimate=hi=64*12*15:lo=64*5*15:frac=1" -frame_pts true -vsync vfr -q:v 5 "./videos/raw/%08d.jpg"
-python3 yafot-facebook.py --page-id $PAGE_ID --pdir "videos/raw/" --token $ACCESS_TOKEN --start $START --count 5000 --delay 60
+mkdir -pv videos/sub
+mkdir -pv videos/raw \
+&& unzip -d ./videos/ -j ${VIDEO_NAME}.zip
+ls -a videos/sub
+rm -rf videos/raw/* && rm -rf videos/sub/*
+ffmpeg -copyts -i \
+       "./videos/${VIDEO_NAME}/${VIDEO_NAME}.mp4" \
+       -r 1000 -vf "mpdecimate=hi=64*12*15:lo=64*5*15:frac=1", \
+       subtitles=${VIDEONAME}.srt -frame_pts true -vsync vfr -q:v 5 "videos/sub/%08d.jpg" \
+       -r 1000 -vf "mpdecimate=hi=64*12*15:lo=64*5*15:frac=1" -frame_pts true \
+       -vsync vfr -q:v 5 "videos/raw/%08d.jpg"
+
+python3 yafot-facebook.py --page-id $PAGE_ID --pdir "videos/sub/" --token $ACCESS_TOKEN --start $START --count 1800 --delay 60
