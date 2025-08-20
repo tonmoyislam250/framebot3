@@ -165,12 +165,11 @@ def main():
             print(f"{counter}. Done posting frame-number {curren_frame} - Time: {time_12}\n")
 
             # Save progress after each successful frame posting
-            frames_posted = counter
-            save_progress(frames_posted)
+            save_progress(counter)
 
             counter += 1
-            if(counter <= frames_already_posted + config.count):
-                # Wait for some time before going into the next loop
+            # Wait for some time before going into the next loop, but not after the last frame
+            if counter <= frames_already_posted + config.count:
                 if config.verbose:
                     print(f"Sleeping for {config.delay} seconds")
                 time.sleep(config.delay)
