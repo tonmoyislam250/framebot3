@@ -7,6 +7,43 @@ from src import bot
 from src import logger
 
 
+def acquire_lock():
+    """Acquire a file lock to prevent multiple instances from running simultaneously"""
+    lock_file = "posting.lock"
+    try:
+        lock_fd = os.open(lock_file, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+        with os.fdopen(lock_fd, 'w') as f:
+            f.write(str(os.getpid()))
+        return lock_file
+    except OSError:
+        # Lock file exists, check if process is still running
+        if os.path.exists(lock_file):
+            try:
+                with open(lock_file, 'r') as f:
+                    pid = int(f.read().strip())
+                # Check if process is still running (Unix/Linux way)
+                try:
+                    os.kill(pid, 0)
+                    print(f"Another instance is already running (PID: {pid})")
+                    sys.exit(1)
+                except (OSError, ProcessLookupError):
+                    # Process is dead, remove stale lock file
+                    os.remove(lock_file)
+                    return acquire_lock()
+            except (ValueError, IOError):
+                # Invalid lock file, remove it
+                os.remove(lock_file)
+                return acquire_lock()
+        return None
+
+def release_lock(lock_file):
+    """Release the file lock"""
+    if lock_file and os.path.exists(lock_file):
+        try:
+            os.remove(lock_file)
+        except OSError:
+            pass
+
 def check_for_unresolved_error(error_counter, response, edge):
     # Try 10 times before terminating the script
     if error_counter >= 10:
@@ -56,7 +93,16 @@ def clear_progress():
         print(f"Warning: Could not clear progress file: {e}")
 
 def main():
+    lock_file = None
     try:
+        # Acquire lock to prevent multiple instances
+        lock_file = acquire_lock()
+        if lock_file is None:
+            print("Could not acquire lock. Another instance may be running.")
+            sys.exit(1)
+        
+        print("Lock acquired. Starting frame posting...")
+        
         # Parse arguments from commandline
         commandline.process_arguments()
 
@@ -168,20 +214,29 @@ def main():
             save_progress(counter)
 
             counter += 1
-            # Wait for some time before going into the next loop, but not after the last frame
-            if counter <= frames_already_posted + config.count:
+            
+            # Always wait between frames to prevent simultaneous posting, except for the very last frame
+            if curren_frame < end - 1:  # Not the last frame
                 if config.verbose:
-                    print(f"Sleeping for {config.delay} seconds")
+                    print(f"Waiting {config.delay} seconds before next frame...")
                 time.sleep(config.delay)
+            else:
+                print("Last frame completed - no delay needed")
 
         # Clear progress file when all frames are completed
         print(f"Successfully posted all {config.count} frames!")
         clear_progress()
 
     except Exception as e:
-        print(e)
-        logger.log_error(e)
+        print(f"Error: {e}")
+        logger.log_error(str(e))
         sys.exit(1)
+    
+    finally:
+        # Always release the lock
+        if lock_file:
+            release_lock(lock_file)
+            print("Lock released.")
 
 
 if __name__ == '__main__':

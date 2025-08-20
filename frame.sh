@@ -1,6 +1,11 @@
 #!/bin/bash
 pwd && ls -a
 cd /usr/src/app
+mkdir -p RAW
+gdown $LINK
+unzip -q -d RAW/ "$VIDEO_NAME.zip"/bash
+pwd && ls -a
+cd /usr/src/app
 mkdir RAW
 gdown $LINK
 unzip -q -d RAW/ "$VIDEO_NAME.zip"
@@ -21,6 +26,16 @@ get_posted_count() {
 
 # Function to run python script with retry mechanism
 run_with_retry() {
+    # Check for existing lock file before starting
+    if [ -f "posting.lock" ]; then
+        echo "Lock file exists. Another instance may be running. Waiting..."
+        sleep 10
+        if [ -f "posting.lock" ]; then
+            echo "Lock file still exists. Exiting to prevent conflicts."
+            exit 1
+        fi
+    fi
+    
     while true; do
         get_posted_count
         REMAINING_COUNT=$((TOTAL_COUNT - POSTED_COUNT))
