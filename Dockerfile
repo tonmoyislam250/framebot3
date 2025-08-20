@@ -3,7 +3,7 @@ RUN mkdir /usr/src/app -p
 WORKDIR /usr/src/app/
 RUN apk update && apk add --no-cache bash file ffmpeg wget \
     unzip python3 py3-pip uchardet
-RUN pip3 install gdown yt-dlp requests
+RUN pip3 install gdown yt-dlp requests dotenv
 ADD . .
 RUN chmod +x frame.sh
 CMD ./frame.sh

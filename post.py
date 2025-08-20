@@ -25,6 +25,36 @@ def check_for_unresolved_error(error_counter, response, edge):
     time.sleep(10)
 
 
+def load_progress():
+    """Load the progress from a file, return the number of frames already posted"""
+    progress_file = "posting_progress.txt"
+    if os.path.exists(progress_file):
+        try:
+            with open(progress_file, 'r') as f:
+                return int(f.read().strip())
+        except (ValueError, IOError):
+            return 0
+    return 0
+
+def save_progress(frames_posted):
+    """Save the current progress to a file"""
+    progress_file = "posting_progress.txt"
+    try:
+        with open(progress_file, 'w') as f:
+            f.write(str(frames_posted))
+    except IOError as e:
+        print(f"Warning: Could not save progress: {e}")
+
+def clear_progress():
+    """Clear the progress file when all frames are completed"""
+    progress_file = "posting_progress.txt"
+    try:
+        if os.path.exists(progress_file):
+            os.remove(progress_file)
+            print("Progress file cleared - all frames completed!")
+    except IOError as e:
+        print(f"Warning: Could not clear progress file: {e}")
+
 def main():
     try:
         # Parse arguments from commandline
@@ -39,14 +69,20 @@ def main():
             cframes = sorted(os.listdir(config.cdir))
 
         total_frames = len(pframes)
-        start = config.start
+        
+        # Load progress to resume from where we left off
+        frames_already_posted = load_progress()
+        print(f"Resuming from frame #{frames_already_posted + 1} (already posted {frames_already_posted} frames)")
+        
+        # Adjust start position based on progress
+        actual_start = config.start + frames_already_posted
         end = config.start + config.count  # Loop is run in [start, end) range, so +1 isn't necessary
 
-        counter = 1 # counter for the number of frames posted
+        counter = frames_already_posted + 1 # counter for the number of frames posted
 
         # Loop body. Each iteration does four tasks related to a single frame
         # Namely, post, comment, add post-photo in album, add comment-photo in album
-        for curren_frame in range(start, end):
+        for curren_frame in range(actual_start, end):
 
             # Only base filenames without the directory parts are stored in the list
             # Base-filenames must be joined back with their directory part
@@ -128,12 +164,20 @@ def main():
 
             print(f"{counter}. Done posting frame-number {curren_frame} - Time: {time_12}\n")
 
+            # Save progress after each successful frame posting
+            frames_posted = counter
+            save_progress(frames_posted)
+
             counter += 1
-            if(counter <= config.count):
+            if(counter <= frames_already_posted + config.count):
                 # Wait for some time before going into the next loop
                 if config.verbose:
                     print(f"Sleeping for {config.delay} seconds")
                 time.sleep(config.delay)
+
+        # Clear progress file when all frames are completed
+        print(f"Successfully posted all {config.count} frames!")
+        clear_progress()
 
     except Exception as e:
         print(e)
