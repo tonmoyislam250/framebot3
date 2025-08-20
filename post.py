@@ -7,43 +7,6 @@ from src import bot
 from src import logger
 
 
-def acquire_lock():
-    """Acquire a file lock to prevent multiple instances from running simultaneously"""
-    lock_file = "posting.lock"
-    try:
-        lock_fd = os.open(lock_file, os.O_CREAT | os.O_EXCL | os.O_RDWR)
-        with os.fdopen(lock_fd, 'w') as f:
-            f.write(str(os.getpid()))
-        return lock_file
-    except OSError:
-        # Lock file exists, check if process is still running
-        if os.path.exists(lock_file):
-            try:
-                with open(lock_file, 'r') as f:
-                    pid = int(f.read().strip())
-                # Check if process is still running (Unix/Linux way)
-                try:
-                    os.kill(pid, 0)
-                    print(f"Another instance is already running (PID: {pid})")
-                    sys.exit(1)
-                except (OSError, ProcessLookupError):
-                    # Process is dead, remove stale lock file
-                    os.remove(lock_file)
-                    return acquire_lock()
-            except (ValueError, IOError):
-                # Invalid lock file, remove it
-                os.remove(lock_file)
-                return acquire_lock()
-        return None
-
-def release_lock(lock_file):
-    """Release the file lock"""
-    if lock_file and os.path.exists(lock_file):
-        try:
-            os.remove(lock_file)
-        except OSError:
-            pass
-
 def check_for_unresolved_error(error_counter, response, edge):
     # Try 10 times before terminating the script
     if error_counter >= 10:
@@ -62,47 +25,8 @@ def check_for_unresolved_error(error_counter, response, edge):
     time.sleep(10)
 
 
-def load_progress():
-    """Load the progress from a file, return the number of frames already posted"""
-    progress_file = "posting_progress.txt"
-    if os.path.exists(progress_file):
-        try:
-            with open(progress_file, 'r') as f:
-                return int(f.read().strip())
-        except (ValueError, IOError):
-            return 0
-    return 0
-
-def save_progress(frames_posted):
-    """Save the current progress to a file"""
-    progress_file = "posting_progress.txt"
-    try:
-        with open(progress_file, 'w') as f:
-            f.write(str(frames_posted))
-    except IOError as e:
-        print(f"Warning: Could not save progress: {e}")
-
-def clear_progress():
-    """Clear the progress file when all frames are completed"""
-    progress_file = "posting_progress.txt"
-    try:
-        if os.path.exists(progress_file):
-            os.remove(progress_file)
-            print("Progress file cleared - all frames completed!")
-    except IOError as e:
-        print(f"Warning: Could not clear progress file: {e}")
-
 def main():
-    lock_file = None
     try:
-        # Acquire lock to prevent multiple instances
-        lock_file = acquire_lock()
-        if lock_file is None:
-            print("Could not acquire lock. Another instance may be running.")
-            sys.exit(1)
-        
-        print("Lock acquired. Starting frame posting...")
-        
         # Parse arguments from commandline
         commandline.process_arguments()
 
@@ -115,20 +39,14 @@ def main():
             cframes = sorted(os.listdir(config.cdir))
 
         total_frames = len(pframes)
-        
-        # Load progress to resume from where we left off
-        frames_already_posted = load_progress()
-        print(f"Resuming from frame #{frames_already_posted + 1} (already posted {frames_already_posted} frames)")
-        
-        # Adjust start position based on progress
-        actual_start = config.start + frames_already_posted
+        start = config.start
         end = config.start + config.count  # Loop is run in [start, end) range, so +1 isn't necessary
 
-        counter = frames_already_posted + 1 # counter for the number of frames posted
+        counter = 1 # counter for the number of frames posted
 
         # Loop body. Each iteration does four tasks related to a single frame
         # Namely, post, comment, add post-photo in album, add comment-photo in album
-        for curren_frame in range(actual_start, end):
+        for curren_frame in range(start, end):
 
             # Only base filenames without the directory parts are stored in the list
             # Base-filenames must be joined back with their directory part
@@ -210,33 +128,17 @@ def main():
 
             print(f"{counter}. Done posting frame-number {curren_frame} - Time: {time_12}\n")
 
-            # Save progress after each successful frame posting
-            save_progress(counter)
-
             counter += 1
-            
-            # Always wait between frames to prevent simultaneous posting, except for the very last frame
-            if curren_frame < end - 1:  # Not the last frame
+            if(counter <= config.count):
+                # Wait for some time before going into the next loop
                 if config.verbose:
-                    print(f"Waiting {config.delay} seconds before next frame...")
+                    print(f"Sleeping for {config.delay} seconds")
                 time.sleep(config.delay)
-            else:
-                print("Last frame completed - no delay needed")
-
-        # Clear progress file when all frames are completed
-        print(f"Successfully posted all {config.count} frames!")
-        clear_progress()
 
     except Exception as e:
-        print(f"Error: {e}")
-        logger.log_error(str(e))
+        print(e)
+        logger.log_error(e)
         sys.exit(1)
-    
-    finally:
-        # Always release the lock
-        if lock_file:
-            release_lock(lock_file)
-            print("Lock released.")
 
 
 if __name__ == '__main__':
