@@ -3,11 +3,6 @@ pwd && ls -a
 cd /usr/src/app
 mkdir -p RAW
 gdown $LINK
-unzip -q -d RAW/ "$VIDEO_NAME.zip"/bash
-pwd && ls -a
-cd /usr/src/app
-mkdir RAW
-gdown $LINK
 unzip -q -d RAW/ "$VIDEO_NAME.zip"
 
 # Initialize progress tracking
