@@ -3,7 +3,7 @@ pwd && ls -a
 cd /usr/src/app
 mkdir RAW
 gdown $LINK
-unzip -d RAW/ $VIDEO_NAME.zip
+unzip -d RAW/ "$VIDEO_NAME.zip"
 
 # Initialize progress tracking
 PROGRESS_FILE="posting_progress.txt"
